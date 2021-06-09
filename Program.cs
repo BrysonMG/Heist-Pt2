@@ -8,7 +8,7 @@ namespace Heist
     {
         static void Main(string[] args)
         {
-            Console.Clear();
+            //Console.Clear();
             Console.WriteLine(@"
             __  __     _      __                           
            / / / /__  (_)____/ /_                          
@@ -25,13 +25,13 @@ namespace Heist
             List<IRobber> Rolodex = new List<IRobber>();
 
             //-------------Starting Crew Members---------------
-            Hacker Mike = new Hacker("Mike", 100, 60);
+            Hacker Mike = new Hacker("Mike", 100, 10);
             Hacker Kevin = new Hacker("Kevin", 40, 15);
 
-            Muscle Igor = new Muscle("Igor", 75, 35);
+            Muscle Igor = new Muscle("Igor", 100, 10);
             Muscle Mary = new Muscle("Mary", 10, 5);
 
-            LockSpecialist Emily = new LockSpecialist("Emily", 85, 40);
+            LockSpecialist Emily = new LockSpecialist("Emily", 100, 10);
             LockSpecialist Aaron = new LockSpecialist("Aaron", 50, 25);
 
             Rolodex.Add(Mike);
@@ -142,11 +142,6 @@ What is {NewContactName}'s specialty?
                 Console.WriteLine($"You now have {Rolodex.Count} contacts in your rolodex.");
             }
 
-            StartHeist();
-        }
-
-        public static void StartHeist()
-        {
             int RandomAlarm = new Random().Next(1, 101);
             int RandomVault = new Random().Next(1, 101);
             int RandomGuard = new Random().Next(1, 101);
@@ -175,10 +170,88 @@ What is {NewContactName}'s specialty?
                 MostSecure = "The Guards";
             }
 
+            if (BankStats.Min() == RandomAlarm)
+            {
+                LeastSecure = "The Alarms";
+            }
+            else if (BankStats.Min() == RandomVault)
+            {
+                LeastSecure = "The Vault";
+            }
+            else
+            {
+                LeastSecure = "The Guards";
+            }
+
             Console.WriteLine();
             Console.WriteLine("Recon Report:");
-            Console.WriteLine($"Our Target's Most Secure System is: {MostSecure}");
+            Console.WriteLine($"Our Target's Most Secure System is: {MostSecure}.");
+            Console.WriteLine($"Our Target's Least Secure System is: {LeastSecure}.");
+            Console.WriteLine();
 
+
+            List<IRobber> Crew = new List<IRobber>();
+            int PossibleCut = 100;
+
+            bool recruiting = true;
+            while (recruiting)
+            {
+                Console.WriteLine("Contact Summary:");
+                Console.WriteLine();
+                foreach (IRobber rob in Rolodex)
+                {
+                    if (rob.PercentageCut <= PossibleCut)
+                    {
+                        Console.WriteLine($"{Rolodex.IndexOf(rob)})");
+                        Console.WriteLine($"{rob.Name}: Their specialty is {rob.GetType().Name} with a skill level of {rob.SkillLevel}.");
+                        Console.WriteLine($"{rob.Name} will take {rob.PercentageCut}% of the money.");
+                        Console.WriteLine();
+                    }
+                }
+                Console.WriteLine("Please select a contact to recruit.");
+                Console.WriteLine("Enter a blank line to stop recruiting.");
+                string RecruitNum = Console.ReadLine();
+
+                if (string.IsNullOrEmpty(RecruitNum))
+                {
+                    recruiting = false;
+                    break;
+                }
+                else
+                {
+                    int RecruitIndex = int.Parse(RecruitNum);
+                    PossibleCut -= Rolodex[RecruitIndex].PercentageCut;
+                    IRobber ToMove = Rolodex[RecruitIndex];
+                    Crew.Add(ToMove);
+                    Rolodex.RemoveAt(RecruitIndex);
+                }
+            }
+
+            foreach (IRobber rob in Crew)
+            {
+                rob.PerformSkill(Target);
+            }
+
+            if (Target.AlarmScore <= 0 && Target.SecurityGuardScore <= 0 && Target.VaultScore <= 0)
+            {
+                Console.WriteLine("The heist was a success!");
+                Console.WriteLine($"Your crew earned ${Target.CashOnHand}!!!");
+                decimal RemainingCash = Target.CashOnHand;
+
+                foreach (IRobber rob in Crew)
+                {
+                    Console.WriteLine($"{rob.Name} took ${(rob.PercentageCut / 100m) * Target.CashOnHand} for their hard work.");
+                    RemainingCash -= ((rob.PercentageCut / 100m) * Target.CashOnHand);
+                }
+
+                Console.WriteLine();
+                Console.WriteLine($"After paying your crew their shares, you have ${RemainingCash} left for yourself.");
+                Console.WriteLine("Keep it somewhere safe... like a bank ;)");
+            }
+            else
+            {
+                Console.WriteLine("You failed to get past all of the bank's defences...");
+            }
         }
     }
 }
